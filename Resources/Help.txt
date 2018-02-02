@@ -1,0 +1,76 @@
+
+This will take a SQL query and output a CSV file.  Or import a CSV file.
+ 
+    Usage:
+          SqlToCsv "query" "file" [options]
+          SqlToCsv "query" "file" /Export [options]
+          SqlToCsv "query" /From:email /To:email /Subject:text  [options]
+          SqlToCsv "file" "table" /Import [options]
+ 
+Arguments:
+    Optionally the arguments can be set as parameters.
+    /Query:text = the SQL query to export.
+    /File:file = the file to import or export.
+    /Table:name = the table name to import.
+ 
+Database options:
+    /S:server = the server to get the data from.  Default "(local)"
+    /D:database = the database to query.
+    /U:user = user name to login.
+    /P:password
+    /T:timeout = The time in seconds to wait for the command to execute. The default is 30 seconds.
+    /CreateTable = (CT) Create the table.  This will get the column size from the CSV file. (import only)
+ 
+File options:
+    /E:encoding = "ASCII", "Unicode", "UTF7", "UTF8", "UTF16" or "UTF32".  Default=ASCII
+    /FieldSeparator:c = (FS) This is the one character field separator in the CSV file. (\t = tab)
+    /TrimWhiteSpace = (TWS) Trim the white space from both end of the data values.
+    /ExcludeHeader = (EH) This will not write out the header row.
+    /Replace:oldText:newText (R) = replace oldText with newText.  (\t=tab, \n=lf, \r=cr, \:=:, \\=\)
+    /CR:text = This will replace the CR (\r) character with text.
+    /LF:text = This will replace the LF (\n) character with text.
+    /ReplaceControlCharacter:text (RCC) = This will replace all control character with text except \r\n\t.
+ 
+Email options:
+    The email options can only be used with the Export option.  The export file is optional.
+    /From:email = from email address.
+    /To:email;email;... = one or more email address to send the CSV file to.
+    /CC:email;email;... = zero or more email address to send the CSV file to.
+    /BCC:email;email;... = zero of more email address to send the CSV file to.
+    /Subject:text = text of the subject line in the email.
+    /Body:text = text that goes into the body of the email.
+    /Attachment:fileName.ext = send the file as an attachment with this file name.
+    /SmtpServer:name = is the SMTP server to send the email though.
+ 
+Other options:
+    /Export = Select from a SQL database and output it to a CSV file.  (default)
+    /Import = Take a CSV file and insert it into a database table.
+    /ParamFile:file = (PF) Get the parameters from a file.
+ 
+Examples:
+    SqlToCsv MyStoredProcedure c:\Text.csv
+    SqlToCsv "select * from MyTable" \\server\share\test.csv
+    SqlToCsv MySp c:\test.csv /S:Pluto /D:Juggler /U:me /P:pa$$woRd
+    SqlToCsv MySp test.csv /S:Pluto /D:Juggler /E:UTF8
+    SqlToCsv MySp test.csv /S:Pluto /D:Juggler /FS:| /TWS /RCC:" " /CR:{cr} /LF:{lf}
+    SqlToCsv c:\test.csv MyTable /Import /S:Pluto /D:Juggler /CT /TWS
+    SqlToCsv c:\test.csv MyTable /Import /S:Pluto /D:Juggler /FS:|
+    SqlToCsv "select * from MyTable" /From:me@my.com /To:you@your.com /Subject:"CSV file" /Body:"here it is"
+    SqlToCsv "select * from MyTable" c:/test.csv /From:m@m.com /To:y@y.com /Subject:"CSV" /Attachment:yes
+    SqlToCsv /PF:parameterFile.txt
+
+ParameterFile:
+    Example:
+        Query = select * from MyTable
+        From = m@m.com
+        To = y@y.com
+        Subject = CSV
+        Body = Here is the CSV file you asked for.
+        Attachment = yes
+        SmtpServer = mail.server.com
+ 
+Note:
+    If there is no user name or password, it will use windows authentication.
+    Quotes (") can be used around parameters if it has spaces or special characters.
+    UTF16 is the same as Unicode.
+    The CreateTable parameter will create the database table based on the column names and the max width of the data as a NVARCHAR().
