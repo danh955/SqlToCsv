@@ -34,48 +34,13 @@ namespace SqlToCsv
     {
         /// <summary>
         /// This will convert an array of objects into a single CSV line.
-        /// The field separator will be ','.  White spaces will be trimmed.
-        /// </summary>
-        /// <param name="values">An array of objects.</param>
-        /// <returns>CSV string</returns>
-        public static string Export(IEnumerable values)
-        {
-            return Export(values, ',', true, null);
-        }
-
-        /// <summary>
-        /// This will convert an array of objects into a single CSV line.
-        /// White spaces will be trimmed.
-        /// </summary>
-        /// <param name="values">A list of values</param>
-        /// <param name="fieldSeparator">The field separator character</param>
-        /// <returns>CSV string</returns>
-        public static string Export(IEnumerable values, char fieldSeparator)
-        {
-            return Export(values, fieldSeparator, true, null);
-        }
-
-        /// <summary>
-        /// This will convert an array of objects into a single CSV line.
-        /// The field separator will be ','.
-        /// </summary>
-        /// <param name="values">A list of values</param>
-        /// <param name="trimWhiteSpace">Trim() the fields of white spaces</param>
-        /// <returns>CSV string</returns>
-        public static string Export(IEnumerable values, bool trimWhiteSpace)
-        {
-            return Export(values, ',', trimWhiteSpace, null);
-        }
-
-        /// <summary>
-        /// This will convert an array of objects into a single CSV line.
         /// </summary>
         /// <param name="values">A list of values</param>
         /// <param name="fieldSeparator">The field separator character</param>
         /// <param name="trimWhiteSpace">Trim() the fields of white spaces</param>
         /// <param name="replace">Text to replace in a value.</param>
         /// <returns>CSV string</returns>
-        public static string Export(IEnumerable values, char fieldSeparator, bool trimWhiteSpace, KeyValuePair<string, string>[] replace)
+        public static string Export(IEnumerable values, char fieldSeparator = ',', bool trimWhiteSpace = true, KeyValuePair<string, string>[] replace = null)
         {
             char[] escapeChars = new char[] { fieldSeparator, '"', '\n', '\r' };
 
@@ -122,7 +87,7 @@ namespace SqlToCsv
                     if (value.Length > 0)
                     {
                         // No.
-                        // Are there excape characters in the string?
+                        // Are there escape characters in the string?
                         if (value.IndexOfAny(escapeChars) >= 0)
                         {
                             // Yes.
@@ -155,54 +120,13 @@ namespace SqlToCsv
         /// This will read from a TextReader that has CSV data and convert
         /// one data row to an array of strings.  Each time this is called,
         /// it will convert another data row.
-        /// The field separator will be ','.  White spaces will be trimmed.
-        /// </summary>
-        /// <param name="reader">A TextReader to read in one row of data</param>
-        /// <returns>string array of fields, or a null reference if done.</returns>
-        public static string[] Import(TextReader reader)
-        {
-            return Import(reader, ',', true, null);
-        }
-
-        /// <summary>
-        /// This will read from a TextReader that has CSV data and convert
-        /// one data row to an array of strings.  Each time this is called,
-        /// it will convert another data row.
-        /// White spaces will be trimmed.
-        /// </summary>
-        /// <param name="reader">A TextReader to read in one row of data</param>
-        /// <param name="fieldSeparator">The field separator character</param>
-        /// <returns>string array of fields, or a null reference if done.</returns>
-        public static string[] Import(TextReader reader, char fieldSeparator)
-        {
-            return Import(reader, fieldSeparator, true, null);
-        }
-
-        /// <summary>
-        /// This will read from a TextReader that has CSV data and convert
-        /// one data row to an array of strings.  Each time this is called,
-        /// it will convert another data row.
-        /// The field separator will be ','.
-        /// </summary>
-        /// <param name="reader">A TextReader to read in one row of data</param>
-        /// <param name="trimWhiteSpace">Trim() the fields of white spaces</param>
-        /// <returns>string array of fields, or a null reference if done.</returns>
-        public static string[] Import(TextReader reader, bool trimWhiteSpace)
-        {
-            return Import(reader, ',', trimWhiteSpace, null);
-        }
-
-        /// <summary>
-        /// This will read from a TextReader that has CSV data and convert
-        /// one data row to an array of strings.  Each time this is called,
-        /// it will convert another data row.
         /// </summary>
         /// <param name="reader">A TextReader to read in one row of data</param>
         /// <param name="fieldSeparator">The field separator character</param>
         /// <param name="trimWhiteSpace">Trim() the fields of white spaces</param>
         /// <param name="replace">Text to replace in a value.</param>
         /// <returns>string array of fields, or a null reference if done.</returns>
-        public static string[] Import(TextReader reader, char fieldSeparator, bool trimWhiteSpace, KeyValuePair<string, string>[] replace)
+        public static string[] Import(TextReader reader, char fieldSeparator = ',', bool trimWhiteSpace = true, KeyValuePair<string, string>[] replace = null)
         {
             // Get the next line to work with.
             string text = reader.ReadLine();
@@ -253,7 +177,7 @@ namespace SqlToCsv
                                 // No.
                                 // Save this part.
                                 value += text.Substring(leftIdx, textLength - leftIdx) + Environment.NewLine;
-                                
+
                                 // Move to next line.
                                 text = reader.ReadLine();
                                 while ((text != null) && (text.Length == 0))
@@ -358,7 +282,33 @@ namespace SqlToCsv
                 fields.Add(value);
             }
 
+            // Pickup trailing field separator.
+            if (textLength > 0 && text[textLength - 1] == fieldSeparator)
+            {
+                fields.Add(string.Empty);
+            }
+
             return fields.ToArray();
+        }
+
+        /// <summary>
+        /// This will read from a TextReader that has CSV data and convert
+        /// all the data row to an array of string arrays.  Each row will
+        /// be a string array.
+        /// </summary>
+        /// <param name="reader">A TextReader to read in one row of data</param>
+        /// <param name="fieldSeparator">The field separator character</param>
+        /// <param name="trimWhiteSpace">Trim() the fields of white spaces</param>
+        /// <param name="replace">Text to replace in a value.</param>
+        /// <returns>IEnumerable of string arrays.</returns>
+        public static IEnumerable<string[]> ImportToArray(TextReader reader, char fieldSeparator = ',', bool trimWhiteSpace = true, KeyValuePair<string, string>[] replace = null)
+        {
+            string[] values = CSV.Import(reader, fieldSeparator, trimWhiteSpace, replace);
+            while (values != null)
+            {
+                yield return values;
+                values = CSV.Import(reader, fieldSeparator, trimWhiteSpace, replace);
+            }
         }
 
         /// <summary>
